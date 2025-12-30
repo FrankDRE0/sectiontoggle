@@ -1,21 +1,9 @@
-//jQuery( document ).ready(function() {
 jQuery(function () {
-
-    function escapeRegExp(expr) {
-        return expr.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&');
-    }
-
-    function getHeaderLevel(el) {
-        var tag = el.tagName.toLowerCase();
-        if (tag.match(/^h[1-6]$/)) {
-            return parseInt(tag.substring(1), 10);
-        }
-        return null;
-    }
 
     if (JSINFO['se_actual_tpl'] == 'icke-template' && !JSINFO['se_suspend']) {
         icke_OnMobileFix();
     }
+
     if (JSINFO['se_suspend']) {
         if (jQuery('p.sectoggle').length > 0) {
             jQuery('p.sectoggle').hide();
@@ -37,17 +25,16 @@ jQuery(function () {
         if (SectionToggle.is_active && !JSINFO['toc_xcl']) {
             jQuery("ul.toc li div.li a, ul.toc li a").click(function () {
                 var text = jQuery(this).html();
-                text = text.toLowerCase();
-                text = text.replace(/\s/g, "_");
+                text = text.toLowerCase().replace(/\s/g, "_");
                 if (SectionToggle.toc_xcl.indexOf(text) > -1) return;
                 var id = '#' + text;
                 jQuery(id).toggleClass('st_closed st_opened');
 
                 var $next = jQuery(id).next();
-                var level = getHeaderLevel(jQuery(id)[0]);
+                var level = SectionToggle.getHeaderLevel(jQuery(id)[0]);
                 while ($next.length) {
                     if ($next.is(':header')) {
-                        var nextLevel = getHeaderLevel($next[0]);
+                        var nextLevel = SectionToggle.getHeaderLevel($next[0]);
                         if (nextLevel <= level) break;
                     }
                     $next.toggle();
@@ -56,92 +43,98 @@ jQuery(function () {
             });
         }
 
+        // Initialize headers
         jQuery(SectionToggle.headers).each(function (index, elem) {
             if (typeof (jQuery(elem).next().html()) === 'undefined') return;
 
             var skip = false;
             var regex;
             var hash = jQuery(elem).html().replace(/\s/g, "_");
-            regex = RegExp('\\b' + escapeRegExp(hash.toLowerCase()) + '\\b');
+            regex = RegExp('\\b' + hash.toLowerCase() + '\\b');
 
             if (hash.toLowerCase() == SectionToggle.hash || regex.test(JSINFO['h_ini_open'])) {
                 skip = true;
-            }
-            else if (SectionToggle.hash) {
-                regex = RegExp('^' + SectionToggle.hash, 'i');  //bootstrap3
-                if (regex.test(hash)) {
-                    skip = true;
-                }
+            } else if (SectionToggle.hash) {
+                regex = RegExp('^' + SectionToggle.hash, 'i');
+                if (regex.test(hash)) skip = true;
             }
 
             if (SectionToggle.is_active && jQuery(elem).next().html().match(/\w/)) {
-                this.onclick = function () {
-                    SectionToggle.checkheader(elem, index);
-                };
 
-                this.onmouseover = elem.style.cursor = 'pointer';
-                var $class = 'st_closed header__' + index;
-                jQuery(this).addClass($class);
-                if (skip) {
-                    jQuery(elem).removeClass('st_closed').addClass('st_opened');
-                }
+                // Set initial closed class
+                jQuery(elem).addClass('st_closed').css('cursor', 'pointer');
 
-                // hide content hierarchically
-                var level = getHeaderLevel(elem);
+                // Hide content hierarchically
+                var level = SectionToggle.getHeaderLevel(elem);
                 var $next = jQuery(elem).next();
                 while ($next.length) {
                     if ($next.is(':header')) {
-                        var nextLevel = getHeaderLevel($next[0]);
+                        var nextLevel = SectionToggle.getHeaderLevel($next[0]);
                         if (nextLevel <= level) break;
                     }
                     $next.hide();
                     $next = $next.next();
                 }
 
+                // Show if skip/opened by hash
                 if (skip) {
+                    jQuery(elem).removeClass('st_closed').addClass('st_opened');
                     var $next = jQuery(elem).next();
                     while ($next.length) {
                         if ($next.is(':header')) {
-                            var nextLevel = getHeaderLevel($next[0]);
+                            var nextLevel = SectionToggle.getHeaderLevel($next[0]);
                             if (nextLevel <= level) break;
                         }
                         $next.show();
                         $next = $next.next();
                     }
                 }
-            }
-            if (JSINFO['start_open']) {
-                SectionToggle.open_all();
+
+                // Bind click
+                jQuery(elem).on('click', function () {
+                    SectionToggle.checkheader(this, index);
+                });
             }
         });
+
+        if (JSINFO['start_open']) {
+            SectionToggle.open_all();
+        }
     }
 });
 
 var SectionToggle = {
 
-    checkheader: function (el, index) {
+    getHeaderLevel: function (el) {
+        var tag = el.tagName.toLowerCase();
+        if (tag.match(/^h[1-6]$/)) {
+            return parseInt(tag.substring(1), 10);
+        }
+        return null;
+    },
 
-        var level = getHeaderLevel(el);
+    checkheader: function (el, index) {
+        var level = this.getHeaderLevel(el);
         if (!level) return;
 
         jQuery(el).toggleClass('st_closed st_opened');
-        var open = jQuery(el).hasClass('st_opened');
+        var isOpen = jQuery(el).hasClass('st_opened');
 
         var $next = jQuery(el).next();
-
         while ($next.length) {
             if ($next.is(':header')) {
-                var nextLevel = getHeaderLevel($next[0]);
+                var nextLevel = this.getHeaderLevel($next[0]);
                 if (nextLevel <= level) break;
             }
-            open ? $next.show() : $next.hide();
+            isOpen ? $next.show() : $next.hide();
             $next = $next.next();
         }
     },
 
     open_all: function () {
+        var self = this;
         jQuery(this.headers).each(function () {
-            var level = getHeaderLevel(this);
+            var level = self.getHeaderLevel(this);
             if (!level) return;
 
             jQuery(this).removeClass('st_closed').addClass('st_opened');
@@ -149,7 +142,7 @@ var SectionToggle = {
             var $next = jQuery(this).next();
             while ($next.length) {
                 if ($next.is(':header')) {
-                    var nl = getHeaderLevel($next[0]);
+                    var nl = self.getHeaderLevel($next[0]);
                     if (nl <= level) break;
                 }
                 $next.show();
@@ -159,8 +152,9 @@ var SectionToggle = {
     },
 
     close_all: function () {
+        var self = this;
         jQuery(this.headers).each(function () {
-            var level = getHeaderLevel(this);
+            var level = self.getHeaderLevel(this);
             if (!level) return;
 
             jQuery(this).removeClass('st_opened').addClass('st_closed');
@@ -168,7 +162,7 @@ var SectionToggle = {
             var $next = jQuery(this).next();
             while ($next.length) {
                 if ($next.is(':header')) {
-                    var nl = getHeaderLevel($next[0]);
+                    var nl = self.getHeaderLevel($next[0]);
                     if (nl <= level) break;
                 }
                 $next.hide();
@@ -182,17 +176,13 @@ var SectionToggle = {
         if (JSINFO.se_act != 'show') return;
         if (JSINFO.se_platform == 'a') {
             this.is_active = true;
-        }
-        else if (JSINFO.se_platform == 'm' && this.device_class.match(/mobile/)) {
+        } else if (JSINFO.se_platform == 'm' && this.device_class.match(/mobile/)) {
             this.is_active = true;
         }
 
         if (this.is_active) {
-            /*normalize url hash */
             if (window.location.hash) {
-                SectionToggle.hash = window.location.hash.toLowerCase();
-                SectionToggle.hash = SectionToggle.hash.replace(/#/, "");
-                SectionToggle.hash = SectionToggle.hash.replace(/\s/g, "_");
+                SectionToggle.hash = window.location.hash.toLowerCase().replace(/#/, "").replace(/\s/g, "_");
             }
             this.set_headers();
         }
@@ -203,10 +193,8 @@ var SectionToggle = {
         var toc_headers_xcl = "";
         var xclheaders = new Array(0, 0, 0, 0, 0, 0, 0);
         if (JSINFO['se_xcl_headers']) {
-            xcl = JSINFO['se_xcl_headers'].split(',');
-            for (var i = 0; i < xcl.length; i++) {
-                xclheaders[xcl[i]] = 1;
-            }
+            var xcl = JSINFO['se_xcl_headers'].split(',');
+            for (var i = 0; i < xcl.length; i++) xclheaders[xcl[i]] = 1;
         }
 
         var which_id = '#dokuwiki__content';
@@ -214,34 +202,25 @@ var SectionToggle = {
             which_id = JSINFO['se_name'];
         }
 
-        if (jQuery('div #section__toggle').length > 0) {
-            which_id = '#section__toggle';
-        }
+        if (jQuery('div #section__toggle').length > 0) which_id = '#section__toggle';
         which_id = 'div ' + which_id;
         var id_string = "";
 
-        if (jQuery(which_id).length == 0) {
-            JSINFO['no_ini'] = 1;
-        }
+        if (jQuery(which_id).length == 0) JSINFO['no_ini'] = 1;
 
         if (JSINFO['no_ini']) {
             var qstr = "";
-
-            jQuery(":header").each(function (index, elem) {
-
+            jQuery(":header").each(function () {
                 var $id, $class = jQuery(this).attr('class');
                 var tagname = jQuery(this).prop("tagName").toLowerCase();
-                matches = tagname.match(/h(\d)/);
+                var matches = tagname.match(/h(\d)/);
                 if (matches[1] > JSINFO['se_headers'] || xclheaders[matches[1]]) return;
 
                 if ($class) {
                     if ($class.match(/sr-only|toggle/)) return;
                     var $classes = $class.match(/sectionedit\d+/);
-                    if ($classes) {
-                        tagname = tagname + "." + $classes[0];
-                    }
-                }
-                else {
+                    if ($classes) tagname = tagname + "." + $classes[0];
+                } else {
                     $id = jQuery(this).attr('id');
                     tagname = tagname + "#" + $id;
                 }
@@ -264,12 +243,9 @@ var SectionToggle = {
         this.headers = id_string;
 
         this.toc_xcl = this.toc_xcl.replace(/,+$/, "");
-        jQuery(this.toc_xcl).each(function (index, elem) {
+        jQuery(this.toc_xcl).each(function () {
             var id = jQuery(this).attr('id');
-            if (id) {
-                id = id.replace(/\s/g, "_");
-                toc_headers_xcl += id + ',';
-            }
+            if (id) toc_headers_xcl += id.replace(/\s/g, "_") + ',';
         });
 
         this.toc_xcl = ">>" + toc_headers_xcl;
@@ -287,13 +263,11 @@ function icke_OnMobileFix() {
     var MOBILE_WIDTH = 600;
     var SHALLOWST_SECTION_TO_HIDE = 2;
     var DEEPEST_SECTION_TO_HIDE = 6;
-    var i;
-    var $page;
     if (jQuery(window).width() <= MOBILE_WIDTH) {
-        $page = jQuery('div.page');
-        for (i = SHALLOWST_SECTION_TO_HIDE; i < DEEPEST_SECTION_TO_HIDE; i += 1) {
+        var $page = jQuery('div.page');
+        for (var i = SHALLOWST_SECTION_TO_HIDE; i < DEEPEST_SECTION_TO_HIDE; i++) {
             $page.find('div.level' + i).show();
-            $page.find('h' + i).click(function toggleSection() {
+            $page.find('h' + i).click(function () {
                 jQuery(this).next('div').toggle();
             });
         }
