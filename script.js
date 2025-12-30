@@ -30,16 +30,10 @@ jQuery(function () {
                 var id = '#' + text;
                 jQuery(id).toggleClass('st_closed st_opened');
 
-                var $next = jQuery(id).next();
-                var level = SectionToggle.getHeaderLevel(jQuery(id)[0]);
-                while ($next.length) {
-                    if ($next.is(':header')) {
-                        var nextLevel = SectionToggle.getHeaderLevel($next[0]);
-                        if (nextLevel <= level) break;
-                    }
-                    $next.toggle();
-                    $next = $next.next();
-                }
+                // Toggle only immediate content, not nested headers
+                jQuery(id).nextUntil(':header').each(function () {
+                    jQuery(this).toggle();
+                });
             });
         }
 
@@ -64,30 +58,13 @@ jQuery(function () {
                 // Set initial closed class
                 jQuery(elem).addClass('st_closed').css('cursor', 'pointer');
 
-                // Hide content hierarchically
-                var level = SectionToggle.getHeaderLevel(elem);
-                var $next = jQuery(elem).next();
-                while ($next.length) {
-                    if ($next.is(':header')) {
-                        var nextLevel = SectionToggle.getHeaderLevel($next[0]);
-                        if (nextLevel <= level) break;
-                    }
-                    $next.hide();
-                    $next = $next.next();
-                }
+                // Hide only direct content, not nested headers
+                jQuery(elem).nextUntil(':header').hide();
 
                 // Show if skip/opened by hash
                 if (skip) {
                     jQuery(elem).removeClass('st_closed').addClass('st_opened');
-                    var $next = jQuery(elem).next();
-                    while ($next.length) {
-                        if ($next.is(':header')) {
-                            var nextLevel = SectionToggle.getHeaderLevel($next[0]);
-                            if (nextLevel <= level) break;
-                        }
-                        $next.show();
-                        $next = $next.next();
-                    }
+                    jQuery(elem).nextUntil(':header').show();
                 }
 
                 // Bind click
@@ -120,15 +97,10 @@ var SectionToggle = {
         jQuery(el).toggleClass('st_closed st_opened');
         var isOpen = jQuery(el).hasClass('st_opened');
 
-        var $next = jQuery(el).next();
-        while ($next.length) {
-            if ($next.is(':header')) {
-                var nextLevel = this.getHeaderLevel($next[0]);
-                if (nextLevel <= level) break;
-            }
-            isOpen ? $next.show() : $next.hide();
-            $next = $next.next();
-        }
+        // Toggle only immediate content, not nested headers
+        jQuery(el).nextUntil(':header').each(function () {
+            isOpen ? jQuery(this).show() : jQuery(this).hide();
+        });
     },
 
     open_all: function () {
@@ -139,15 +111,8 @@ var SectionToggle = {
 
             jQuery(this).removeClass('st_closed').addClass('st_opened');
 
-            var $next = jQuery(this).next();
-            while ($next.length) {
-                if ($next.is(':header')) {
-                    var nl = self.getHeaderLevel($next[0]);
-                    if (nl <= level) break;
-                }
-                $next.show();
-                $next = $next.next();
-            }
+            // Show only direct content per header
+            jQuery(this).nextUntil(':header').show();
         });
     },
 
@@ -159,15 +124,8 @@ var SectionToggle = {
 
             jQuery(this).removeClass('st_opened').addClass('st_closed');
 
-            var $next = jQuery(this).next();
-            while ($next.length) {
-                if ($next.is(':header')) {
-                    var nl = self.getHeaderLevel($next[0]);
-                    if (nl <= level) break;
-                }
-                $next.hide();
-                $next = $next.next();
-            }
+            // Hide only direct content per header
+            jQuery(this).nextUntil(':header').hide();
         });
     },
 
@@ -273,5 +231,3 @@ function icke_OnMobileFix() {
         }
     }
 };
-
-
