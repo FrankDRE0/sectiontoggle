@@ -11,28 +11,28 @@
 }
 
 /* h1 - large circle (main) */
-h1.st_closed::before { content: '●'; }
-h1.st_opened::before { content: '○'; }
+h1.st_closed::before { content: '● '; }
+h1.st_opened::before { content: '○ '; }
 
 /* h2 - right arrow */
-h2.st_closed::before { content: '▶'; }
-h2.st_opened::before { content: '▷'; }
+h2.st_closed::before { content: '▶ '; }
+h2.st_opened::before { content: '▷ '; }
 
 /* h3 - square */
-h3.st_closed::before { content: '■'; }
-h3.st_opened::before { content: '□'; }
+h3.st_closed::before { content: '■ '; }
+h3.st_opened::before { content: '□ '; }
 
 /* h4 - up arrow / triangle */
-h4.st_closed::before { content: '▲'; }
-h4.st_opened::before { content: '△'; }
+h4.st_closed::before { content: '▲ '; }
+h4.st_opened::before { content: '△ '; }
 
 /* h5 - small circle */
-h5.st_closed::before { content: '∙'; }
-h5.st_opened::before { content: '∘'; }
+h5.st_closed::before { content: '∙ '; }
+h5.st_opened::before { content: '∘ '; }
 
 /* h6 - x and + */
-h6.st_closed::before { content: '×'; }
-h6.st_opened::before { content: '+'; }
+h6.st_closed::before { content: '× '; }
+h6.st_opened::before { content: '+ '; }
 
 /* Optional indentation for hierarchy */
 h1.st_closed, h1.st_opened { padding-left: 0; }
