@@ -84,28 +84,30 @@ var SectionToggle = {
         }
         return null;
     },
+    
+    checkheader: function(el) {
+    var level = this.getHeaderLevel(el);
+    if (!level) return;
 
-    checkheader: function (el) {
-        var level = this.getHeaderLevel(el);
-        if (!level) return;
+    var $el = jQuery(el);
+    var isOpen = !$el.hasClass('st_opened');
 
-        var $el = jQuery(el);
-        var isOpen = !$el.hasClass('st_opened');
+    // Close all other headers of the same level
+    jQuery(this.headers).each(function() {
+        if (this === el) return;
+        if (SectionToggle.getHeaderLevel(this) === level) {
+            jQuery(this).removeClass('st_opened').addClass('st_closed');
+            jQuery(this).nextUntil(':header').hide();
+        }
+    });
 
-        // Accordion: close sibling headers of same level
-        $el.siblings(':header').each(function () {
-            if (SectionToggle.getHeaderLevel(this) === level) {
-                jQuery(this).removeClass('st_opened').addClass('st_closed');
-                jQuery(this).nextUntil(':header').hide();
-            }
-        });
+    // Toggle clicked header
+    $el.toggleClass('st_closed st_opened');
+    $el.nextUntil(':header').each(function() {
+        isOpen ? jQuery(this).show() : jQuery(this).hide();
+    });
+},
 
-        // Toggle this header
-        $el.toggleClass('st_closed st_opened');
-        $el.nextUntil(':header').each(function () {
-            isOpen ? jQuery(this).show() : jQuery(this).hide();
-        });
-    },
 
     open_all: function () {
         var self = this;
@@ -231,3 +233,4 @@ function icke_OnMobileFix() {
         }
     }
 };
+
