@@ -28,12 +28,7 @@ jQuery(function () {
                 text = text.toLowerCase().replace(/\s/g, "_");
                 if (SectionToggle.toc_xcl.indexOf(text) > -1) return;
                 var id = '#' + text;
-                jQuery(id).toggleClass('st_closed st_opened');
-
-                // Toggle only immediate content, not nested headers
-                jQuery(id).nextUntil(':header').each(function () {
-                    jQuery(this).toggle();
-                });
+                SectionToggle.checkheader(jQuery(id)[0]);
             });
         }
 
@@ -69,7 +64,7 @@ jQuery(function () {
 
                 // Bind click
                 jQuery(elem).on('click', function () {
-                    SectionToggle.checkheader(this, index);
+                    SectionToggle.checkheader(this);
                 });
             }
         });
@@ -90,15 +85,24 @@ var SectionToggle = {
         return null;
     },
 
-    checkheader: function (el, index) {
+    checkheader: function (el) {
         var level = this.getHeaderLevel(el);
         if (!level) return;
 
-        jQuery(el).toggleClass('st_closed st_opened');
-        var isOpen = jQuery(el).hasClass('st_opened');
+        var $el = jQuery(el);
+        var isOpen = !$el.hasClass('st_opened');
 
-        // Toggle only immediate content, not nested headers
-        jQuery(el).nextUntil(':header').each(function () {
+        // Accordion: close sibling headers of same level
+        $el.siblings(':header').each(function () {
+            if (SectionToggle.getHeaderLevel(this) === level) {
+                jQuery(this).removeClass('st_opened').addClass('st_closed');
+                jQuery(this).nextUntil(':header').hide();
+            }
+        });
+
+        // Toggle this header
+        $el.toggleClass('st_closed st_opened');
+        $el.nextUntil(':header').each(function () {
             isOpen ? jQuery(this).show() : jQuery(this).hide();
         });
     },
@@ -110,8 +114,6 @@ var SectionToggle = {
             if (!level) return;
 
             jQuery(this).removeClass('st_closed').addClass('st_opened');
-
-            // Show only direct content per header
             jQuery(this).nextUntil(':header').show();
         });
     },
@@ -123,8 +125,6 @@ var SectionToggle = {
             if (!level) return;
 
             jQuery(this).removeClass('st_opened').addClass('st_closed');
-
-            // Hide only direct content per header
             jQuery(this).nextUntil(':header').hide();
         });
     },
