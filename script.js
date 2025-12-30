@@ -59,7 +59,7 @@ jQuery(function () {
                 if (regex.test(hash)) skip = true;
             }
 
-            if (SectionToggle.is_active && jQuery(elem).next().html().match(/\w/)) {
+            if (SectionToggle.is_active {
 
                 // Set initial closed class
                 jQuery(elem).addClass('st_closed').css('cursor', 'pointer');
@@ -273,3 +273,4 @@ function icke_OnMobileFix() {
         }
     }
 };
+
