@@ -5,23 +5,18 @@ jQuery(function () {
     }
 
     if (JSINFO['se_suspend']) {
-        if (jQuery('p.sectoggle').length > 0) {
-            jQuery('p.sectoggle').hide();
-        }
+        if (jQuery('p.sectoggle').length > 0) jQuery('p.sectoggle').hide();
         SectionToggle.is_active = false;
     } else {
-        if (JSINFO['se_device']) {
-            SectionToggle.device_class = JSINFO['se_device'];
-        }
+        if (JSINFO['se_device']) SectionToggle.device_class = JSINFO['se_device'];
 
         SectionToggle.check_status();
 
         if (!SectionToggle.is_active) {
-            if (jQuery('p.sectoggle').length > 0) {
-                jQuery('p.sectoggle').hide();
-            }
+            if (jQuery('p.sectoggle').length > 0) jQuery('p.sectoggle').hide();
         }
 
+        // TOC click handler
         if (SectionToggle.is_active && !JSINFO['toc_xcl']) {
             jQuery("ul.toc li div.li a, ul.toc li a").click(function () {
                 var text = jQuery(this).html().toLowerCase().replace(/\s/g, "_");
@@ -33,44 +28,39 @@ jQuery(function () {
 
         // Initialize headers
         jQuery(SectionToggle.headers).each(function (index, elem) {
-            if (typeof (jQuery(elem).next().html()) === 'undefined') return;
+            if (!jQuery(elem).next().length) return;
+            var $elem = jQuery(elem);
 
-            var skip = false;
-            var regex;
-            var hash = jQuery(elem).html().replace(/\s/g, "_");
-            regex = RegExp('\\b' + hash.toLowerCase() + '\\b');
-
-            if (hash.toLowerCase() == SectionToggle.hash || regex.test(JSINFO['h_ini_open'])) {
-                skip = true;
-            } else if (SectionToggle.hash) {
-                regex = RegExp('^' + SectionToggle.hash, 'i');
-                if (regex.test(hash)) skip = true;
+            // Wrap content until next header
+            var $content = $elem.nextUntil(':header');
+            if (!$content.parent().hasClass('st_section_content')) {
+                $content.wrapAll('<div class="st_section_content"></div>');
             }
 
-            if (SectionToggle.is_active) {
+            var level = SectionToggle.getHeaderLevel(elem);
 
-                // Set initial closed class
-                jQuery(elem).addClass('st_closed').css('cursor', 'pointer');
+            // Indent headers and content
+            $elem.css('padding-left', (level - 1) * 20 + 'px');
+            $elem.next('.st_section_content').css('padding-left', level * 20 + 'px');
 
-                // Hide direct content and nested headers
-                SectionToggle.hideContent(jQuery(elem)[0]);
+            // Initialize closed state
+            $elem.addClass('st_closed').css('cursor', 'pointer');
+            SectionToggle.hideContent(elem);
 
-                // Show if skip/opened by hash
-                if (skip) {
-                    jQuery(elem).removeClass('st_closed').addClass('st_opened');
-                    SectionToggle.showContent(jQuery(elem)[0]);
-                }
-
-                // Bind click
-                jQuery(elem).on('click', function () {
-                    SectionToggle.checkheader(this);
-                });
+            // Open if matching hash
+            var hash = $elem.html().replace(/\s/g, "_").toLowerCase();
+            if (hash === SectionToggle.hash) {
+                $elem.removeClass('st_closed').addClass('st_opened');
+                SectionToggle.showContent(elem);
             }
+
+            // Bind click
+            $elem.on('click', function () {
+                SectionToggle.checkheader(this);
+            });
         });
 
-        if (JSINFO['start_open']) {
-            SectionToggle.open_all();
-        }
+        if (JSINFO['start_open']) SectionToggle.open_all();
     }
 });
 
@@ -78,13 +68,11 @@ var SectionToggle = {
 
     getHeaderLevel: function (el) {
         var tag = el.tagName.toLowerCase();
-        if (tag.match(/^h[1-6]$/)) {
-            return parseInt(tag.substring(1), 10);
-        }
+        if (tag.match(/^h[1-6]$/)) return parseInt(tag.substring(1), 10);
         return null;
     },
 
-    hideContent: function(el) {
+    hideContent: function (el) {
         var level = this.getHeaderLevel(el);
         var $next = jQuery(el).next();
         while ($next.length) {
@@ -98,7 +86,7 @@ var SectionToggle = {
         }
     },
 
-    showContent: function(el) {
+    showContent: function (el) {
         var level = this.getHeaderLevel(el);
         var $next = jQuery(el).next();
         while ($next.length) {
@@ -107,28 +95,24 @@ var SectionToggle = {
                 if (nextLevel <= level) break;
             }
             $next.show();
+            if (!$next.is(':header')) $next.css('padding-left', level * 20 + 'px');
             $next = $next.next();
         }
     },
 
-    checkheader: function(el) {
+    checkheader: function (el) {
         var $el = jQuery(el);
         var level = this.getHeaderLevel(el);
         if (!level) return;
 
         var isOpen = !$el.hasClass('st_opened');
-
-        // Toggle clicked header
         $el.toggleClass('st_closed st_opened');
 
-        if (isOpen) {
-            this.showContent(el);
-        } else {
-            this.hideContent(el);
-        }
+        if (isOpen) this.showContent(el);
+        else this.hideContent(el);
     },
 
-    open_all: function() {
+    open_all: function () {
         var self = this;
         jQuery(this.headers).each(function () {
             jQuery(this).removeClass('st_closed').addClass('st_opened');
@@ -136,7 +120,7 @@ var SectionToggle = {
         });
     },
 
-    close_all: function() {
+    close_all: function () {
         var self = this;
         jQuery(this.headers).each(function () {
             jQuery(this).removeClass('st_opened').addClass('st_closed');
@@ -144,14 +128,11 @@ var SectionToggle = {
         });
     },
 
-    check_status: function() {
+    check_status: function () {
         if (JSINFO.se_platform == 'n') return;
         if (JSINFO.se_act != 'show') return;
-        if (JSINFO.se_platform == 'a') {
-            this.is_active = true;
-        } else if (JSINFO.se_platform == 'm' && this.device_class.match(/mobile/)) {
-            this.is_active = true;
-        }
+        if (JSINFO.se_platform == 'a') this.is_active = true;
+        else if (JSINFO.se_platform == 'm' && this.device_class.match(/mobile/)) this.is_active = true;
 
         if (this.is_active) {
             if (window.location.hash) {
@@ -161,7 +142,7 @@ var SectionToggle = {
         }
     },
 
-    set_headers: function() {
+    set_headers: function () {
         var nheaders = parseInt(JSINFO['se_headers']) + 1;
         var toc_headers_xcl = "";
         var xclheaders = new Array(0, 0, 0, 0, 0, 0, 0);
@@ -171,10 +152,7 @@ var SectionToggle = {
         }
 
         var which_id = '#dokuwiki__content';
-        if (JSINFO['se_name'] != '_empty_' && JSINFO['se_template'] == 'other') {
-            which_id = JSINFO['se_name'];
-        }
-
+        if (JSINFO['se_name'] != '_empty_' && JSINFO['se_template'] == 'other') which_id = JSINFO['se_name'];
         if (jQuery('div #section__toggle').length > 0) which_id = '#section__toggle';
         which_id = 'div ' + which_id;
         var id_string = "";
@@ -216,11 +194,11 @@ var SectionToggle = {
         this.headers = id_string;
 
         this.toc_xcl = this.toc_xcl.replace(/,+$/, "");
+        var toc_headers_xcl = "";
         jQuery(this.toc_xcl).each(function () {
             var id = jQuery(this).attr('id');
             if (id) toc_headers_xcl += id.replace(/\s/g, "_") + ',';
         });
-
         this.toc_xcl = ">>" + toc_headers_xcl;
     },
 
