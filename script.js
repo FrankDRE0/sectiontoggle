@@ -86,20 +86,32 @@ var SectionToggle = {
     },
     
     checkheader: function(el) {
+    var $el = jQuery(el);
     var level = this.getHeaderLevel(el);
     if (!level) return;
 
-    var $el = jQuery(el);
     var isOpen = !$el.hasClass('st_opened');
+    $el.toggleClass('st_closed st_opened');
 
-    // Close all other headers of the same level
-    jQuery(this.headers).each(function() {
-        if (this === el) return;
-        if (SectionToggle.getHeaderLevel(this) === level) {
-            jQuery(this).removeClass('st_opened').addClass('st_closed');
-            jQuery(this).nextUntil(':header').hide();
+    // Iterate through all subsequent siblings until next header of same or higher level
+    var $next = $el.next();
+    while ($next.length) {
+        if ($next.is(':header')) {
+            var nextLevel = this.getHeaderLevel($next[0]);
+            if (nextLevel <= level) break; // stop at same or higher level header
         }
-    });
+
+        // Toggle visibility based on parent header state
+        isOpen ? $next.show() : $next.hide();
+
+        // If element is a header, recursively collapse/open its children
+        if ($next.is(':header') && !isOpen) {
+            this.checkheader($next[0]); 
+        }
+
+        $next = $next.next();
+    }
+}
 
     // Toggle clicked header
     $el.toggleClass('st_closed st_opened');
@@ -233,4 +245,5 @@ function icke_OnMobileFix() {
         }
     }
 };
+
 
