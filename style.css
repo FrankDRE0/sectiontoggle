@@ -10,13 +10,13 @@
     content: none; /* remove the SVG content */
 }
 
-/* h1 - large circle (main) */
-h1.st_closed::before { content: '● '; }
-h1.st_opened::before { content: '○ '; }
+/* h1 - right arrow */
+h1.st_closed::before { content: '▶ '; }
+h1.st_opened::before { content: '▷ '; }
 
-/* h2 - right arrow */
-h2.st_closed::before { content: '▶ '; }
-h2.st_opened::before { content: '▷ '; }
+/* h2 - large circle (main) */
+h2.st_closed::before { content: '● '; }
+h2.st_opened::before { content: '○ '; }
 
 /* h3 - square */
 h3.st_closed::before { content: '■ '; }
