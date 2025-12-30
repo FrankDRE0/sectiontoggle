@@ -1,10 +1,43 @@
-[class*="header__"].st_closed::before {
-	content: url('chevron-down.svg');
-	vertical-align: middle;
-	padding-right: 0.25em;
-}
+/* Base for all collapsible headers */
+[class*="header__"].st_closed::before,
 [class*="header__"].st_opened::before {
-	content: url('chevron-up.svg');
-	vertical-align: middle;
-	padding-right: 0.25em;
+    display: inline-block;
+    width: 1em;
+    margin-right: 0.3em;
+    vertical-align: middle;
+    font-weight: bold;
+    padding-right: 0.25em;
+    content: none; /* remove the SVG content */
 }
+
+/* h1 - large circle (main) */
+h1.st_closed::before { content: '●'; }
+h1.st_opened::before { content: '○'; }
+
+/* h2 - right arrow */
+h2.st_closed::before { content: '▶'; }
+h2.st_opened::before { content: '▷'; }
+
+/* h3 - square */
+h3.st_closed::before { content: '■'; }
+h3.st_opened::before { content: '□'; }
+
+/* h4 - up arrow / triangle */
+h4.st_closed::before { content: '▲'; }
+h4.st_opened::before { content: '△'; }
+
+/* h5 - small circle */
+h5.st_closed::before { content: '∙'; }
+h5.st_opened::before { content: '∘'; }
+
+/* h6 - x and + */
+h6.st_closed::before { content: '×'; }
+h6.st_opened::before { content: '+'; }
+
+/* Optional indentation for hierarchy */
+h1.st_closed, h1.st_opened { padding-left: 0; }
+h2.st_closed, h2.st_opened { padding-left: 0.5em; }
+h3.st_closed, h3.st_opened { padding-left: 1em; }
+h4.st_closed, h4.st_opened { padding-left: 1.5em; }
+h5.st_closed, h5.st_opened { padding-left: 2em; }
+h6.st_closed, h6.st_opened { padding-left: 2.5em; }
