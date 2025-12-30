@@ -1,20 +1,12 @@
 jQuery(function () {
 
-    if (JSINFO['se_actual_tpl'] == 'icke-template' && !JSINFO['se_suspend']) {
-        icke_OnMobileFix();
-    }
-
     if (JSINFO['se_suspend']) {
-        if (jQuery('p.sectoggle').length > 0) jQuery('p.sectoggle').hide();
+        jQuery('p.sectoggle').hide();
         SectionToggle.is_active = false;
     } else {
-        if (JSINFO['se_device']) SectionToggle.device_class = JSINFO['se_device'];
-
         SectionToggle.check_status();
 
-        if (!SectionToggle.is_active) {
-            if (jQuery('p.sectoggle').length > 0) jQuery('p.sectoggle').hide();
-        }
+        if (!SectionToggle.is_active) jQuery('p.sectoggle').hide();
 
         // TOC click handler
         if (SectionToggle.is_active && !JSINFO['toc_xcl']) {
@@ -27,11 +19,11 @@ jQuery(function () {
         }
 
         // Initialize headers
-        jQuery(SectionToggle.headers).each(function (index, elem) {
-            if (!jQuery(elem).next().length) return;
+        jQuery(SectionToggle.headers).each(function (_, elem) {
             var $elem = jQuery(elem);
+            if (!$elem.next().length) return;
 
-            // Wrap content until next header
+            // Wrap all content until next header
             var $content = $elem.nextUntil(':header');
             if (!$content.parent().hasClass('st_section_content')) {
                 $content.wrapAll('<div class="st_section_content"></div>');
@@ -43,15 +35,15 @@ jQuery(function () {
             $elem.css('padding-left', (level - 1) * 20 + 'px');
             $elem.next('.st_section_content').css('padding-left', level * 20 + 'px');
 
-            // Initialize closed state
+            // Initialize collapsed state
             $elem.addClass('st_closed').css('cursor', 'pointer');
-            SectionToggle.hideContent(elem);
+            $elem.next('.st_section_content').hide();
 
-            // Open if matching hash
+            // Open if hash matches
             var hash = $elem.html().replace(/\s/g, "_").toLowerCase();
             if (hash === SectionToggle.hash) {
                 $elem.removeClass('st_closed').addClass('st_opened');
-                SectionToggle.showContent(elem);
+                $elem.next('.st_section_content').show();
             }
 
             // Bind click
@@ -72,34 +64,6 @@ var SectionToggle = {
         return null;
     },
 
-    hideContent: function (el) {
-        var level = this.getHeaderLevel(el);
-        var $next = jQuery(el).next();
-        while ($next.length) {
-            if ($next.is(':header')) {
-                var nextLevel = this.getHeaderLevel($next[0]);
-                if (nextLevel <= level) break;
-                $next.removeClass('st_opened').addClass('st_closed');
-            }
-            $next.hide();
-            $next = $next.next();
-        }
-    },
-
-    showContent: function (el) {
-        var level = this.getHeaderLevel(el);
-        var $next = jQuery(el).next();
-        while ($next.length) {
-            if ($next.is(':header')) {
-                var nextLevel = this.getHeaderLevel($next[0]);
-                if (nextLevel <= level) break;
-            }
-            $next.show();
-            if (!$next.is(':header')) $next.css('padding-left', level * 20 + 'px');
-            $next = $next.next();
-        }
-    },
-
     checkheader: function (el) {
         var $el = jQuery(el);
         var level = this.getHeaderLevel(el);
@@ -108,8 +72,14 @@ var SectionToggle = {
         var isOpen = !$el.hasClass('st_opened');
         $el.toggleClass('st_closed st_opened');
 
-        if (isOpen) this.showContent(el);
-        else this.hideContent(el);
+        var $next = $el.next();
+        while ($next.length) {
+            if ($next.is(':header')) {
+                if (this.getHeaderLevel($next[0]) <= level) break;
+            }
+            isOpen ? $next.show() : $next.hide();
+            $next = $next.next();
+        }
     },
 
     open_all: function () {
@@ -128,6 +98,31 @@ var SectionToggle = {
         });
     },
 
+    hideContent: function (el) {
+        var level = this.getHeaderLevel(el);
+        var $next = jQuery(el).next();
+        while ($next.length) {
+            if ($next.is(':header')) {
+                if (this.getHeaderLevel($next[0]) <= level) break;
+                $next.removeClass('st_opened').addClass('st_closed');
+            }
+            $next.hide();
+            $next = $next.next();
+        }
+    },
+
+    showContent: function (el) {
+        var level = this.getHeaderLevel(el);
+        var $next = jQuery(el).next();
+        while ($next.length) {
+            if ($next.is(':header')) {
+                if (this.getHeaderLevel($next[0]) <= level) break;
+            }
+            $next.show();
+            $next = $next.next();
+        }
+    },
+
     check_status: function () {
         if (JSINFO.se_platform == 'n') return;
         if (JSINFO.se_act != 'show') return;
@@ -144,7 +139,6 @@ var SectionToggle = {
 
     set_headers: function () {
         var nheaders = parseInt(JSINFO['se_headers']) + 1;
-        var toc_headers_xcl = "";
         var xclheaders = new Array(0, 0, 0, 0, 0, 0, 0);
         if (JSINFO['se_xcl_headers']) {
             var xcl = JSINFO['se_xcl_headers'].split(',');
@@ -155,9 +149,6 @@ var SectionToggle = {
         if (JSINFO['se_name'] != '_empty_' && JSINFO['se_template'] == 'other') which_id = JSINFO['se_name'];
         if (jQuery('div #section__toggle').length > 0) which_id = '#section__toggle';
         which_id = 'div ' + which_id;
-        var id_string = "";
-
-        if (jQuery(which_id).length == 0) JSINFO['no_ini'] = 1;
 
         if (JSINFO['no_ini']) {
             var qstr = "";
@@ -167,8 +158,7 @@ var SectionToggle = {
                 var matches = tagname.match(/h(\d)/);
                 if (matches[1] > JSINFO['se_headers'] || xclheaders[matches[1]]) return;
 
-                if ($class) {
-                    if ($class.match(/sr-only|toggle/)) return;
+                if ($class && !$class.match(/sr-only|toggle/)) {
                     var $classes = $class.match(/sectionedit\d+/);
                     if ($classes) tagname = tagname + "." + $classes[0];
                 } else {
@@ -182,24 +172,15 @@ var SectionToggle = {
             return;
         }
 
+        var id_string = "";
         for (var i = 1; i < nheaders; i++) {
-            if (xclheaders[i]) {
-                this.toc_xcl += which_id + ' h' + i + ',';
-                continue;
+            if (!xclheaders[i]) {
+                id_string += which_id + ' h' + i;
+                if (i < nheaders - 1) id_string += ',';
             }
-            id_string += which_id + ' h' + i;
-            if (i < nheaders - 1) id_string += ',';
         }
         id_string = id_string.replace(/,+$/, "");
         this.headers = id_string;
-
-        this.toc_xcl = this.toc_xcl.replace(/,+$/, "");
-        var toc_headers_xcl = "";
-        jQuery(this.toc_xcl).each(function () {
-            var id = jQuery(this).attr('id');
-            if (id) toc_headers_xcl += id.replace(/\s/g, "_") + ',';
-        });
-        this.toc_xcl = ">>" + toc_headers_xcl;
     },
 
     headers: "",
@@ -207,20 +188,4 @@ var SectionToggle = {
     device_class: 'desktop',
     is_active: false,
     hash: "",
-};
-
-function icke_OnMobileFix() {
-    if (JSINFO['se_platform'] != 'm' && JSINFO['se_platform'] != 'a') return;
-    var MOBILE_WIDTH = 600;
-    var SHALLOWST_SECTION_TO_HIDE = 2;
-    var DEEPEST_SECTION_TO_HIDE = 6;
-    if (jQuery(window).width() <= MOBILE_WIDTH) {
-        var $page = jQuery('div.page');
-        for (var i = SHALLOWST_SECTION_TO_HIDE; i < DEEPEST_SECTION_TO_HIDE; i++) {
-            $page.find('div.level' + i).show();
-            $page.find('h' + i).click(function () {
-                jQuery(this).next('div').toggle();
-            });
-        }
-    }
 };
