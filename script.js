@@ -24,8 +24,7 @@ jQuery(function () {
 
         if (SectionToggle.is_active && !JSINFO['toc_xcl']) {
             jQuery("ul.toc li div.li a, ul.toc li a").click(function () {
-                var text = jQuery(this).html();
-                text = text.toLowerCase().replace(/\s/g, "_");
+                var text = jQuery(this).html().toLowerCase().replace(/\s/g, "_");
                 if (SectionToggle.toc_xcl.indexOf(text) > -1) return;
                 var id = '#' + text;
                 SectionToggle.checkheader(jQuery(id)[0]);
@@ -53,13 +52,13 @@ jQuery(function () {
                 // Set initial closed class
                 jQuery(elem).addClass('st_closed').css('cursor', 'pointer');
 
-                // Hide only direct content, not nested headers
-                jQuery(elem).nextUntil(':header').hide();
+                // Hide direct content and nested headers
+                SectionToggle.hideContent(jQuery(elem)[0]);
 
                 // Show if skip/opened by hash
                 if (skip) {
                     jQuery(elem).removeClass('st_closed').addClass('st_opened');
-                    jQuery(elem).nextUntil(':header').show();
+                    SectionToggle.showContent(jQuery(elem)[0]);
                 }
 
                 // Bind click
@@ -84,66 +83,68 @@ var SectionToggle = {
         }
         return null;
     },
-    
+
+    hideContent: function(el) {
+        var level = this.getHeaderLevel(el);
+        var $next = jQuery(el).next();
+        while ($next.length) {
+            if ($next.is(':header')) {
+                var nextLevel = this.getHeaderLevel($next[0]);
+                if (nextLevel <= level) break;
+                $next.removeClass('st_opened').addClass('st_closed');
+            }
+            $next.hide();
+            $next = $next.next();
+        }
+    },
+
+    showContent: function(el) {
+        var level = this.getHeaderLevel(el);
+        var $next = jQuery(el).next();
+        while ($next.length) {
+            if ($next.is(':header')) {
+                var nextLevel = this.getHeaderLevel($next[0]);
+                if (nextLevel <= level) break;
+            }
+            $next.show();
+            $next = $next.next();
+        }
+    },
+
     checkheader: function(el) {
-    var $el = jQuery(el);
-    var level = this.getHeaderLevel(el);
-    if (!level) return;
+        var $el = jQuery(el);
+        var level = this.getHeaderLevel(el);
+        if (!level) return;
 
-    var isOpen = !$el.hasClass('st_opened');
-    $el.toggleClass('st_closed st_opened');
+        var isOpen = !$el.hasClass('st_opened');
 
-    // Iterate through all subsequent siblings until next header of same or higher level
-    var $next = $el.next();
-    while ($next.length) {
-        if ($next.is(':header')) {
-            var nextLevel = this.getHeaderLevel($next[0]);
-            if (nextLevel <= level) break; // stop at same or higher level header
+        // Toggle clicked header
+        $el.toggleClass('st_closed st_opened');
+
+        if (isOpen) {
+            this.showContent(el);
+        } else {
+            this.hideContent(el);
         }
+    },
 
-        // Toggle visibility based on parent header state
-        isOpen ? $next.show() : $next.hide();
-
-        // If element is a header, recursively collapse/open its children
-        if ($next.is(':header') && !isOpen) {
-            this.checkheader($next[0]); 
-        }
-
-        $next = $next.next();
-    }
-}
-
-    // Toggle clicked header
-    $el.toggleClass('st_closed st_opened');
-    $el.nextUntil(':header').each(function() {
-        isOpen ? jQuery(this).show() : jQuery(this).hide();
-    });
-},
-
-
-    open_all: function () {
+    open_all: function() {
         var self = this;
         jQuery(this.headers).each(function () {
-            var level = self.getHeaderLevel(this);
-            if (!level) return;
-
             jQuery(this).removeClass('st_closed').addClass('st_opened');
-            jQuery(this).nextUntil(':header').show();
+            self.showContent(this);
         });
     },
 
-    close_all: function () {
+    close_all: function() {
         var self = this;
         jQuery(this.headers).each(function () {
-            var level = self.getHeaderLevel(this);
-            if (!level) return;
-
             jQuery(this).removeClass('st_opened').addClass('st_closed');
-            jQuery(this).nextUntil(':header').hide();
+            self.hideContent(this);
         });
     },
 
-    check_status: function () {
+    check_status: function() {
         if (JSINFO.se_platform == 'n') return;
         if (JSINFO.se_act != 'show') return;
         if (JSINFO.se_platform == 'a') {
@@ -160,7 +161,7 @@ var SectionToggle = {
         }
     },
 
-    set_headers: function () {
+    set_headers: function() {
         var nheaders = parseInt(JSINFO['se_headers']) + 1;
         var toc_headers_xcl = "";
         var xclheaders = new Array(0, 0, 0, 0, 0, 0, 0);
@@ -245,5 +246,3 @@ function icke_OnMobileFix() {
         }
     }
 };
-
-
